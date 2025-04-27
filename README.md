@@ -1,74 +1,36 @@
-# Universal Game Currency Converter (UGCC)
+# UGCC Backend API - Quick READMEProject 
+Overview
+The backend powers the Universal Game Currency Converter (UGCC) platform.
+It connects game servers (companies) with player wallets, allowing players to convert in-game currency into stablecoins.
 
-A blockchain-based platform designed to simplify and unify the way players purchase and manage in-game currencies across multiple games.
+Structure
+Game1 API (api-game1/)
+Simulates a game company backend that records player spending.
 
-## Features
+User API (api-user/)
+Handles frontend conversion requests, verifies player info with Game1 API, and mints (or fakes) blockchain tokens.
 
-- Connect multiple game accounts and view their balances
-- Convert game currencies to UGCC stablecoin (with 1-week cooldown)
-- Claim converted stablecoins after cooldown period
-- Support for MetaMask and Polkadot.js wallets
-- Real-time balance tracking
-- Transparent conversion rates (70-80% of original value)
+How it Works - Game1 API (Port 3001)
+- POST /spend
+  - Records how much a player has spent.
+  - Needs an Authorization: Bearer game1_key header.
+- GET /spent/:playerId
+  - Returns the total spent amount for the specified player.
+  - Returns 404 if player ID does not exist.
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js 18+ and npm
-
-### Installation
-
-1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/ugcc.git
-cd ugcc
-```
-
-2. Install dependencies:
-```bash
+User API (Port 3003)POST /convert
+Frontend sends playerId, walletAddress, and amountToConvert.
+Backend checks if player exists by calling Game1 API /spent/:playerId.
+If player is valid, mints stablecoins (currently faked).
+If player does not exist, returns 404 error.
+Command to run:
+cd api-user
 npm install
-```
-
-3. Start the development server:
-```bash
-npm run dev
-```
-
-4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Technology Stack
-
-- Next.js 14
-- React 18
-- TypeScript
-- Tailwind CSS
-- Headless UI
-- Heroicons
-- ethers.js
-
-## Project Structure
-
-```
-src/
-├── app/                    # Next.js app router pages
-│   ├── page.tsx           # Dashboard page
-│   ├── convert/           # Currency conversion
-│   └── claim/             # Claim stablecoins
-├── components/            # Reusable components
-│   ├── Navigation.tsx     # Main navigation
-│   └── WalletConnect.tsx  # Wallet connection
-└── styles/               # Global styles
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+node serverU.jsImportant NotesBlockchain minting is currently faked with a random transaction hash.
+Player ID validation is strict: only existing players in Game1 API can convert.
+Frontend only submits Player ID and Wallet ID, amount is preloaded.
+All APIs use localhost ports for testing.
+Example cURL Command to Simulate Spendcurl -X POST http://localhost:3001/spend \
+  -H "Authorization: Bearer game1_key" \
+  -H "Content-Type: application/json" \
+  -d '{"playerId": "player123", "amount": 1000}'Example cURL to Test Conversion (after spending)
