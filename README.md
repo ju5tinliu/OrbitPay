@@ -11,6 +11,25 @@ A blockchain-based platform designed to simplify and unify the way players purch
 - Real-time balance tracking
 - Transparent conversion rates (70-80% of original value)
 
+## API (Back-Main Branch)
+The backend powers the Universal Game Currency Converter (UGCC) platform. It connects game servers (companies) with player wallets, allowing players to convert in-game currency into stablecoins. 
+- Game1 API (api-game1/) Simulates a game company backend that records player spending.
+- User API (api-user/) Handles frontend conversion requests, verifies player info with Game1 API, and mints (or fakes) blockchain tokens.
+
+### Game1 API (Port 3001)
+- POST /spend
+  - Records how much a player has spent.
+  - Needs an Authorization: Bearer game1_key header.
+- GET /spent/:playerId
+  - Returns the total spent amount for the specified player.
+  - Returns 404 if player ID does not exist.
+
+### User API (Port 3003)
+- POST /convert
+- Frontend sends playerId, walletAddress, and amountToConvert.
+- Backend checks if player exists by calling Game1 API /spent/:playerId. If a player is valid, mints stablecoins. If a player does not exist, it returns a 404 error.
+- All APIs use localhost ports for testing.
+
 ## Smart Contract Details
 - Key functions: registerGame(), linkWallet(), triggerPayout()
 - registerGame()
