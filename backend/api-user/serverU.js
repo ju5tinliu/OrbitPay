@@ -12,14 +12,17 @@ const API_USER_KEY = "user_api_secret_key";
 app.use(cors()); 
 app.use(express.json());
 
-// Blockchain Setup
+//------------------------------------Blockchain Setup ---------------------------------------------------//
 const provider = new ethers.JsonRpcProvider("YOUR_BLOCKCHAIN_RPC_URL"); // Ur RPC Url
 const wallet = new ethers.Wallet("YOUR_PRIVATE_KEY", provider); // Private key to wallet (DONT SHARE APPARTELY)
 const contractAddress = "YOUR_CONTRACT_ADDRESS"; // Smart Contract Address
 const contractABI = [
-    "function mintStablecoin(address to, uint256 amount) public"
+    "function shieldcoin(address to, uint256 amount) public"
 ];
 const contract = new ethers.Contract(contractAddress, contractABI, wallet);
+//------------------------------------Blockchain Setup ---------------------------------------------------//
+
+
 
 // Frontend check how much plater set
 app.get('/spent/:playerId', (req, res) => {
@@ -46,13 +49,23 @@ app.post('/convert', async (req, res) => {
         }
 
         // Mint stablecoins to user's wallet
-        const tx = await contract.mintStablecoin(userWalletAddress, amountToConvert);
+        const tx = await contract.shieldcoin(userWalletAddress, amountToConvert);
         await tx.wait(); // Wait for transaction
 
         res.json({
             message: "Conversion successful!",
             transactionHash: tx.hash
         });
+        
+        /* FAKE Conversion (IF WE CANT CONNECT TO REAL BLOCKCHAIN MINT)
+        const fakeTransactionHash = `0x${Math.floor(Math.random() * 1e16).toString(16)}FAKEHASH`;
+
+        res.json({
+            message: "Fake Conversion Successful",
+            transactionHash: fakeTransactionHash
+        }); */
+        
+        
     } catch (error) {
         console.error("Blockchain conversion failed:", error);
         res.status(500).json({ error: "Conversion failed" });
