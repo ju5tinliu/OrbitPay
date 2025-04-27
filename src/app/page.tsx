@@ -175,26 +175,53 @@ export default function Dashboard() {
     setSelectedAccount(null)
   }
 
-  const handleConversionConfirm = (playerId: string, walletId: string) => {
-    if (!selectedAccount) return
-
-    // Remove from game accounts
-    setGameAccounts(gameAccounts.filter(ga => ga.id !== selectedAccount.id))
-
-    // Add to pending claims
-    const newClaim = {
-      id: Date.now(),
-      game: selectedAccount.game,
-      originalAmount: selectedAccount.balance,
-      convertedAmount: selectedAccount.convertibleValue,
-      readyDate: '2025-04-26',
-      status: 'pending'
+  const handleConversionConfirm = async (playerId: string, walletId: string) => {
+    if (!selectedAccount) return;
+  
+    try {
+      const amountString = selectedAccount.convertibleValue.replace(/[^0-9.]/g, '');
+      const amountToConvert = Math.floor(parseFloat(amountString) * 100); 
+  
+      // Call the backend to convert
+      const response = await fetch('http://localhost:3003/convert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          playerId,
+          userWalletAddress: walletId,
+          amountToConvert
+        })
+      });
+  
+      const data = await response.json();
+  
+      if (!response.ok) {
+        alert(`Error: ${data.error || 'Conversion failed'}`);
+        return;
+      }
+  
+      alert(`Conversion Successful! Transaction: ${data.transactionHash}`);
+  
+      // Update frontend (move account to pending)
+      setGameAccounts(gameAccounts.filter((ga) => ga.id !== selectedAccount.id));
+  
+      const newClaim = {
+        id: Date.now(),
+        game: selectedAccount.game,
+        originalAmount: selectedAccount.balance,
+        convertedAmount: selectedAccount.convertibleValue,
+        readyDate: '2025-04-26',
+        status: 'pending'
+      };
+      setPendingClaims([...pendingClaims, newClaim]);
+  
+      handleModalClose();
+  
+    } catch (error) {
+      console.error('Conversion Error:', error);
+      alert('Could not connect to server.');
     }
-    setPendingClaims([...pendingClaims, newClaim])
-    
-    // Close modal
-    handleModalClose()
-  }
+  };
 
   return (
     <div className="space-y-6">
