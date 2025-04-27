@@ -143,8 +143,8 @@ const initialGameAccounts: GameAccount[] = [
 ]
 
 const stats = [
-  { name: 'Total Balance (USD)', value: '$70.00', icon: CurrencyDollarIcon },
-  { name: 'Convertible Value', value: '$49.00', icon: ArrowTrendingUpIcon },
+  { name: 'Total Balance (USD)', value: '$120.00', icon: CurrencyDollarIcon },
+  { name: 'Convertible Value', value: '$84.00', icon: ArrowTrendingUpIcon },
 ]
 
 const initialPendingClaims = [
@@ -210,7 +210,7 @@ export default function Dashboard() {
         game: selectedAccount.game,
         originalAmount: selectedAccount.balance,
         convertedAmount: selectedAccount.convertibleValue,
-        readyDate: '2025-04-26',
+        readyDate: '2025-04-30',
         status: 'pending'
       };
       setPendingClaims([...pendingClaims, newClaim]);
