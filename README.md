@@ -11,6 +11,16 @@ A blockchain-based platform designed to simplify and unify the way players purch
 - Real-time balance tracking
 - Transparent conversion rates (70-80% of original value)
 
+## Smart Contract Details
+- Key functions: registerGame(), linkWallet(), triggerPayout()
+- registerGame()
+  - adds entry in map with an adress (companies address) and their payout rate (percentage of player expenses insured)
+- linkWallet()
+  - studio calls this to update the money spent given a player's additional wallet address
+- triggerPayout()
+  - owner of the smart contract calls this function to deliver insured amount for a player to their address using tokens (testnet tokens right now)
+
+
 ## Getting Started
 
 ### Prerequisites
@@ -46,6 +56,17 @@ npm run dev
 - Headless UI
 - Heroicons
 - ethers.js
+- solidity (on remix)
+
+## Smart Contract 
+- Key functions: registerGame(), linkWallet(), triggerPayout()
+- registerGame()
+  - adds entry in map with an adress (companies address) and their payout rate (percentage of player expenses insured)
+- linkWallet()
+  - studio calls this to update the money spent given a player's additional wallet address
+- triggerPayout()
+  - owner of the smart contract calls this function to deliver insured amount for a player to their address using tokens (testnet tokens right now)
+
 
 ## Project Structure
 
