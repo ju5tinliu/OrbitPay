@@ -9,8 +9,6 @@ import WalletConnect from './WalletConnect'
 
 const navigation = [
   { name: 'Dashboard', href: '/' },
-  { name: 'Convert', href: '/convert' },
-  { name: 'Claim', href: '/claim' },
 ]
 
 function classNames(...classes: string[]) {

@@ -1,13 +1,27 @@
-import { ArrowTrendingUpIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline'
+"use client"
 
-const gameAccounts = [
+import { ArrowTrendingUpIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline'
+import { useState } from 'react'
+
+interface GameAccount {
+  id: number
+  game: string
+  balance: string
+  usdValue: string
+  convertibleValue: string
+  icon: string
+  status: 'shutdown' | 'running'
+}
+
+const initialGameAccounts: GameAccount[] = [
   {
     id: 1,
-    game: 'Roblox',
-    balance: '5000 Robux',
+    game: 'CatBlaster',
+    balance: '5000 MeowBucks',
     usdValue: '$50.00',
     convertibleValue: '$35.00',
-    icon: '/roblox-icon.png'
+    icon: '/catblaster-icon.png',
+    status: 'shutdown'
   },
   {
     id: 2,
@@ -15,7 +29,8 @@ const gameAccounts = [
     balance: '2000 V-Bucks',
     usdValue: '$20.00',
     convertibleValue: '$14.00',
-    icon: '/fortnite-icon.png'
+    icon: '/fortnite-icon.png',
+    status: 'running'
   },
 ]
 
@@ -24,7 +39,39 @@ const stats = [
   { name: 'Convertible Value', value: '$49.00', icon: ArrowTrendingUpIcon },
 ]
 
+const initialPendingClaims = [
+  {
+    id: 1,
+    game: 'Roblox',
+    originalAmount: '5000 Robux',
+    convertedAmount: '$35.00',
+    readyDate: '2025-04-26',
+    status: 'pending'
+  }
+]
+
 export default function Dashboard() {
+  const [gameAccounts, setGameAccounts] = useState(initialGameAccounts)
+  const [pendingClaims, setPendingClaims] = useState(initialPendingClaims)
+
+  const handleConvert = (account: GameAccount) => {
+    if (account.status !== 'shutdown') return
+
+    // Remove from game accounts
+    setGameAccounts(gameAccounts.filter(ga => ga.id !== account.id))
+
+    // Add to pending claims
+    const newClaim = {
+      id: Date.now(),
+      game: account.game,
+      originalAmount: account.balance,
+      convertedAmount: account.convertibleValue,
+      readyDate: '2025-04-26',
+      status: 'pending'
+    }
+    setPendingClaims([...pendingClaims, newClaim])
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -32,28 +79,26 @@ export default function Dashboard() {
           Dashboard
         </h2>
         <p className="mt-1 text-sm leading-6 text-gray-500">
-          Manage your game currencies and see your total balance across all games.
+          Manage your game currencies, convert to stablecoins, and claim your converted funds.
         </p>
       </div>
 
-      <dl className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 max-w-5xl mx-auto">
         {stats.map((stat) => (
           <div
             key={stat.name}
-            className="relative overflow-hidden rounded-lg bg-white px-4 pb-12 pt-5 shadow sm:px-6 sm:pt-6"
+            className="relative overflow-hidden rounded-lg bg-white px-8 py-12 shadow text-center"
           >
-            <dt>
-              <div className="absolute rounded-md bg-indigo-500 p-3">
-                <stat.icon className="h-6 w-6 text-white" aria-hidden="true" />
+            <div className="flex justify-center mb-6">
+              <div className="rounded-md bg-indigo-500 p-5">
+                <stat.icon className="h-10 w-10 text-white" aria-hidden="true" />
               </div>
-              <p className="ml-16 truncate text-sm font-medium text-gray-500">{stat.name}</p>
-            </dt>
-            <dd className="ml-16 flex items-baseline pb-6 sm:pb-7">
-              <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
-            </dd>
+            </div>
+            <h3 className="text-xl font-medium text-gray-900 mb-3">{stat.name}</h3>
+            <p className="text-4xl font-semibold text-gray-900">{stat.value}</p>
           </div>
         ))}
-      </dl>
+      </div>
 
       <div className="mt-8">
         <h3 className="text-base font-semibold leading-6 text-gray-900">Linked Game Accounts</h3>
@@ -69,16 +114,98 @@ export default function Dashboard() {
                     <div className="ml-4">
                       <h4 className="text-lg font-medium text-gray-900">{account.game}</h4>
                       <p className="text-sm text-gray-500">{account.balance}</p>
+                      <p className="text-sm text-gray-500">
+                        Status: <span className={account.status === 'shutdown' ? 'text-red-600 font-medium' : 'text-green-600 font-medium'}>
+                          {account.status === 'shutdown' ? 'Shutdown' : 'Running'}
+                        </span>
+                      </p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium text-gray-900">Value: {account.usdValue}</p>
                     <p className="text-sm text-gray-500">Convertible: {account.convertibleValue}</p>
+                    <button
+                      type="button"
+                      onClick={() => handleConvert(account)}
+                      disabled={account.status !== 'shutdown'}
+                      className={`mt-2 inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${
+                        account.status === 'shutdown'
+                          ? 'bg-indigo-600 hover:bg-indigo-500'
+                          : 'bg-gray-400 cursor-not-allowed'
+                      }`}
+                    >
+                      Convert Now
+                    </button>
                   </div>
                 </div>
               </li>
             ))}
           </ul>
+        </div>
+      </div>
+
+      <div className="bg-white shadow sm:rounded-lg">
+        <div className="px-4 py-5 sm:p-6">
+          <h3 className="text-base font-semibold leading-6 text-gray-900">Pending Claims</h3>
+          
+          <div className="mt-4">
+            {pendingClaims.length > 0 ? (
+              <ul role="list" className="divide-y divide-gray-200">
+                {pendingClaims.map((claim) => (
+                  <li key={claim.id} className="py-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="text-lg font-medium text-gray-900">{claim.game}</h4>
+                        <p className="mt-1 text-sm text-gray-500">
+                          Original Amount: {claim.originalAmount}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          Converted Amount: {claim.convertedAmount}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm text-gray-500">Ready on: {claim.readyDate}</p>
+                        <button
+                          type="button"
+                          disabled={claim.status === 'pending'}
+                          className="mt-2 inline-flex items-center rounded-md bg-indigo-600 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                        >
+                          {claim.status === 'pending' ? 'Pending' : 'Claim Now'}
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <div className="rounded-md bg-yellow-50 p-4">
+                <div className="flex">
+                  <div className="ml-3">
+                    <p className="text-sm text-yellow-700">
+                      No pending claims available
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white shadow sm:rounded-lg">
+        <div className="px-4 py-5 sm:p-6">
+          <h3 className="text-base font-semibold leading-6 text-gray-900">Claim History</h3>
+          <div className="mt-4">
+            <div className="rounded-md bg-gray-50 p-4">
+              <div className="flex">
+                <div className="ml-3">
+                  <p className="text-sm text-gray-700">
+                    No previous claims found
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
