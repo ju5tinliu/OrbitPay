@@ -22,13 +22,21 @@ const contractABI = [
 const contract = new ethers.Contract(contractAddress, contractABI, wallet);
 //------------------------------------Blockchain Setup ---------------------------------------------------*/
 
-
-
 // Frontend check how much plater set
 app.get('/spent/:playerId', (req, res) => {
     const playerId = req.params.playerId;
-    // Fetch from Game 1 API;
-    res.status(400).json({ error: "This endpoint is not supported here. Use Game 1 API instead." });
+
+    if (!playerSpent[playerId]) {
+        // Player ID does not exist
+        return res.status(404).json({ error: "Player ID not found" });
+    }
+
+    const totalSpent = playerSpent[playerId].totalSpent;
+
+    res.json({
+        playerId: playerId,
+        totalSpent: totalSpent
+    });
 });
 
 // POST /convert: frontend requests conversion
@@ -44,8 +52,9 @@ app.post('/convert', async (req, res) => {
         const response = await axios.get(`http://localhost:3001/spent/${playerId}`);
         const { totalSpent } = response.data;
 
-        if (totalSpent < amountToConvert) {
-            return res.status(400).json({ error: "Not enough total spent to convert this amount" });
+        //Check if id exist
+        if (typeof totalSpent !== 'number') {
+            return res.status(404).json({ error: "Player ID not found" });
         }
 
         /* Mint stablecoins to user's wallet
