@@ -2,6 +2,7 @@
 
 import { ArrowTrendingUpIcon, CurrencyDollarIcon } from '@heroicons/react/24/outline'
 import { useState } from 'react'
+import { Dialog } from '@headlessui/react'
 
 interface GameAccount {
   id: number
@@ -11,6 +12,113 @@ interface GameAccount {
   convertibleValue: string
   icon: string
   status: 'shutdown' | 'running'
+}
+
+interface ConversionModalProps {
+  isOpen: boolean
+  account: GameAccount | null
+  onClose: () => void
+  onConfirm: (playerId: string, walletId: string) => void
+}
+
+function ConversionModal({ isOpen, account, onClose, onConfirm }: ConversionModalProps) {
+  const [playerId, setPlayerId] = useState('')
+  const [walletId, setWalletId] = useState('')
+  const [error, setError] = useState('')
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!playerId.trim() || !walletId.trim()) {
+      setError('Both Player ID and Wallet ID are required')
+      return
+    }
+    onConfirm(playerId, walletId)
+    setPlayerId('')
+    setWalletId('')
+    setError('')
+  }
+
+  return (
+    <Dialog open={isOpen} onClose={onClose} className="relative z-50">
+      <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+      
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <Dialog.Panel className="mx-auto max-w-sm rounded-lg bg-white p-6 shadow-xl">
+          <Dialog.Title className="text-lg font-medium leading-6 text-gray-900 mb-4">
+            Confirm Conversion
+          </Dialog.Title>
+
+          {account && (
+            <div className="mb-4">
+              <p className="text-sm text-gray-500">
+                You are about to convert:
+              </p>
+              <p className="font-medium text-gray-900">
+                {account.balance} ({account.game})
+              </p>
+              <p className="text-sm text-gray-500 mt-1">
+                Estimated value: {account.convertibleValue}
+              </p>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="playerId" className="block text-sm font-medium text-gray-700">
+                  Player ID
+                </label>
+                <input
+                  type="text"
+                  id="playerId"
+                  value={playerId}
+                  onChange={(e) => setPlayerId(e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder="Enter your player ID"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="walletId" className="block text-sm font-medium text-gray-700">
+                  Wallet ID
+                </label>
+                <input
+                  type="text"
+                  id="walletId"
+                  value={walletId}
+                  onChange={(e) => setWalletId(e.target.value)}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                  placeholder="Enter your wallet ID"
+                />
+              </div>
+
+              {error && (
+                <p className="text-sm text-red-600">
+                  {error}
+                </p>
+              )}
+
+              <div className="mt-6 flex justify-end space-x-3">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
+                >
+                  Confirm Conversion
+                </button>
+              </div>
+            </div>
+          </form>
+        </Dialog.Panel>
+      </div>
+    </Dialog>
+  )
 }
 
 const initialGameAccounts: GameAccount[] = [
@@ -53,23 +161,39 @@ const initialPendingClaims = [
 export default function Dashboard() {
   const [gameAccounts, setGameAccounts] = useState(initialGameAccounts)
   const [pendingClaims, setPendingClaims] = useState(initialPendingClaims)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedAccount, setSelectedAccount] = useState<GameAccount | null>(null)
 
-  const handleConvert = (account: GameAccount) => {
+  const handleConvertClick = (account: GameAccount) => {
     if (account.status !== 'shutdown') return
+    setSelectedAccount(account)
+    setIsModalOpen(true)
+  }
+
+  const handleModalClose = () => {
+    setIsModalOpen(false)
+    setSelectedAccount(null)
+  }
+
+  const handleConversionConfirm = (playerId: string, walletId: string) => {
+    if (!selectedAccount) return
 
     // Remove from game accounts
-    setGameAccounts(gameAccounts.filter(ga => ga.id !== account.id))
+    setGameAccounts(gameAccounts.filter(ga => ga.id !== selectedAccount.id))
 
     // Add to pending claims
     const newClaim = {
       id: Date.now(),
-      game: account.game,
-      originalAmount: account.balance,
-      convertedAmount: account.convertibleValue,
+      game: selectedAccount.game,
+      originalAmount: selectedAccount.balance,
+      convertedAmount: selectedAccount.convertibleValue,
       readyDate: '2025-04-26',
       status: 'pending'
     }
     setPendingClaims([...pendingClaims, newClaim])
+    
+    // Close modal
+    handleModalClose()
   }
 
   return (
@@ -126,7 +250,7 @@ export default function Dashboard() {
                     <p className="text-sm text-gray-500">Convertible: {account.convertibleValue}</p>
                     <button
                       type="button"
-                      onClick={() => handleConvert(account)}
+                      onClick={() => handleConvertClick(account)}
                       disabled={account.status !== 'shutdown'}
                       className={`mt-2 inline-flex items-center rounded-md px-3 py-2 text-sm font-semibold text-white shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 ${
                         account.status === 'shutdown'
@@ -208,6 +332,13 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      <ConversionModal
+        isOpen={isModalOpen}
+        account={selectedAccount}
+        onClose={handleModalClose}
+        onConfirm={handleConversionConfirm}
+      />
     </div>
   )
 }
